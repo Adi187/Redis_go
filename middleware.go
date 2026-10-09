@@ -41,7 +41,8 @@ func (l *LoggingMiddleware) Len() int{
 
 func (l *LoggingMiddleware) Keys() []string {
 	l.logger.Printf("Keys called")
-	return l.inner.Keys()
+	return l.inner.Keys() 
+	
 }
 
 

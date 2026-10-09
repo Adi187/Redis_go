@@ -14,7 +14,7 @@ func TestTTLStore_SetAndGet(t *testing.T) {
 		t.Fatalf("Set failed: %v", err)
 	}	
 	
-	value, ok := store.GetWithTTL("key1")
+	value, ok,_ := store.Get("key1")
 	if !ok || value != "value1" {
 		t.Fatalf("GetWithTTL failed: expected value1, got %v", value)
 	}
@@ -30,7 +30,7 @@ func TestTTLStore_Expiration(t *testing.T) {
 
 	time.Sleep(2 * time.Second) // Wait for the key to expire
 
-	value, ok := store.GetWithTTL("key2")
+	value, ok,_ := store.Get("key2")
 	if ok || value != "" {
 		t.Fatalf("GetWithTTL should have expired, but got value: %v", value)
 	}
@@ -44,7 +44,7 @@ func TestTTLStore_EmptyKey(t *testing.T) {
 		t.Fatalf("Set should have failed for empty key")
 	}
 
-	value, ok := store.GetWithTTL("")
+	value, ok,_ := store.Get("")
 	if ok || value != "" {
 		t.Fatalf("GetWithTTL should have failed for empty key, but got value: %v", value)
 	}

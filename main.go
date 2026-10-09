@@ -5,31 +5,33 @@ import (
 	"fmt"
 	"redis_go/store"
 	"redis_go/store/kv"
-	"redis_go/store/ttl"
-	"time"
+	// "redis_go/store/ttl"
+	// "time"
 )
 
 func main() {
-	s := CreateStore()
+	// s := CreateStore()
+	plainstore:=kv.NewStore(30)
+    metrics:= NewMetricsMiddleware(plainstore)
 
-	if err := s.Set("age", "15"); err != nil {
-		fmt.Println("Error:", err)
-	}
-
-	encryptedValue, err := SetKeyWithEncryption(s, "secret", "mysecretvalue")
+	
+   
+	encryptedValue, err := SetKeyWithEncryption(metrics, "secret", "mysecretvalue")
 	if err != nil {
 		fmt.Println("Error:", err)
 	} else {
 		fmt.Println("Encoded Value:", encryptedValue)
 	}
+    
+	// ttlStore := ttl.NewTTLStore(5 * time.Second)
+	// encryptedTTLValue, err := SetKeyWithEncryption(ttlStore, "secret", "wqdwefwrfw")
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// } else {
+	// 	fmt.Println("Encoded Value:", encryptedTTLValue)
+	// }
 
-	ttlStore := ttl.NewTTLStore(5 * time.Second)
-	encryptedTTLValue, err := SetKeyWithEncryption(ttlStore, "secret", "wqdwefwrfw")
-	if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		fmt.Println("Encoded Value:", encryptedTTLValue)
-	}
+	metrics.Report()
 }
 
 func CreateStore() store.Storer {
@@ -43,7 +45,11 @@ func SetKeyWithEncryption(s store.Storer, key, val string) (string, error) {
 	if err := s.Set(key, encoded); err != nil {
 		return "", err
 	}
+
+	s.Len()
 	value, _, err := s.Get(key)
 	return value, err
 }
+
+
 
