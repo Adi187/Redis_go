@@ -10,9 +10,7 @@ import (
 )
 
 func main() {
-	s := kv.NewStore(5)
-	_ = s.Set("name", "abcd")
-	_ = s.Set("age", "25")
+	s := CreateStore()
 
 	if err := s.Set("age", "15"); err != nil {
 		fmt.Println("Error:", err)
@@ -34,6 +32,11 @@ func main() {
 	}
 }
 
+func CreateStore() store.Storer {
+  s := kv.NewStore(5)
+  logger := NewLoggingMiddleware(s)
+  return logger
+}
 // SetKeyWithEncryption stores a Base64-encoded value. Base64 is encoding, not encryption.
 func SetKeyWithEncryption(s store.Storer, key, val string) (string, error) {
 	encoded := base64.StdEncoding.EncodeToString([]byte(val))
@@ -43,3 +46,4 @@ func SetKeyWithEncryption(s store.Storer, key, val string) (string, error) {
 	value, _, err := s.Get(key)
 	return value, err
 }
+
