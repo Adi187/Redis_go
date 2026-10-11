@@ -56,6 +56,18 @@ func NewStore(maxSize int) *Store {
 	}
 }
 
+// Clone returns a store with an independent copy of the data.
+func Clone(s *Store) *Store {
+	cloned := &Store{
+		data:    make(map[string]string, len(s.data)),
+		maxSize: s.maxSize,
+	}
+	for key, value := range s.data {
+		cloned.data[key] = value
+	}
+	return cloned
+}
+
 func (s *Store) Keys() []string {
 	keys := make([]string, 0, len(s.data))
 	//sort the keys alphabetically
