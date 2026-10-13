@@ -7,9 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"redis_go/store"
+	"strconv"
+	"time"
+	"sync"
 )
 
 func (s *Store) Len() int {
+	s.mu.Lock()
+	defer s.mu.Unlock() 
 	return len(s.data)
 }
 
@@ -17,6 +23,7 @@ var ErrMaxKeysReached = errors.New("maximum number of keys reached")
 
 // Store is a struct that represents a simple key-value store.
 type Store struct {
+    mu sync.Mutex
 	data    map[string]string
 	maxSize int //0=unlimited
 }
@@ -24,6 +31,8 @@ type Store struct {
 //set method to add a key-value pair to the store.
 
 func (s *Store) Set(key, value string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock() 
 	// Check if the key already exists in the store
 	_, exists := s.data[key]
 	// If the key does not exist, check if the store has reached its maximum size
@@ -39,6 +48,8 @@ func (s *Store) Set(key, value string) error {
 }
 
 func (s *Store) Get(key string) (string, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock() 
 	if value, exists := s.data[key]; exists {
 		return value, true, nil
 	}
@@ -92,4 +103,40 @@ func Delete(s *Store, key string) {
 
 func (s *Store) keys() []string { return s.Keys() }
 
-func (s *Store) Delete(key string) { delete(s.data, key) }
+func (s *Store) Delete(key string) { 
+	s.mu.Lock()
+	defer s.mu.Unlock() 
+	delete(s.data, key) 
+}
+
+//Increment function increments the integer value of key by 1
+//if the key does not exist,Then set the value to 0 and then 
+//increment.
+
+func (s *Store) Incr(key string) (int, error){
+   
+	s.mu.Lock()
+	defer s.mu.Unlock() //moves it to the end of the function
+	if key== ""{
+		return 0, store.ErrEmptykey
+	} 
+
+	//READ
+    current := 0
+	if raw, ok:= s.data[key];ok{
+		v,err := strconv.Atoi(raw)
+		if err!= nil{
+			return 0,fmt.Errorf("INCR %q: %w",key,err)
+		}
+		current=v
+	}
+
+	//MODIFY
+	current++
+	time.Sleep(time.Microsecond)
+	//WRITE
+    s.data[key]=strconv.Itoa(current) //int -> string
+	return current,nil
+}
+
+

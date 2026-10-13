@@ -75,6 +75,10 @@ func (m *MetricsMiddleware) Report() {
 	}
 }
 
+func (m *MetricsMiddleware) Incr(key string) (int, error){
+	
+	return 0,nil
+}
 
 
 

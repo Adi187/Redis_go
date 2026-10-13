@@ -10,34 +10,59 @@ import (
 )
 
 func main() {
-	cmds := []Command{
-		{Op: "SET", Key: "env", Value: "production"},
-		{Op: "SET", Key: "version", Value: "0.0.1"},
-		{Op: "SET", Key: "debug", Value: "true"},
-		{Op: "GET", Key: "env"},
-		{Op: "SET", Key: "region", Value: "eu-west-1"},
-		{Op: "GET", Key: "version"},
-	}
-    
-	
-	// s := CreateStore()
-	plainstore := kv.NewStore(20) 
-	RestoreBoot(plainstore,cmds)
 
-	fmt.Println("restored, stored size : ",plainstore.Len())
-	clonePlainstore := kv.Clone(plainstore)
-	metrics := NewMetricsMiddleware(plainstore)
-	for _, c := range cmds {
-		dispatch(metrics, c)
+	// expected :=1000
+
+	// var wg sync.WaitGroup
+
+	// for i:=0;i < expected;i++{
+	// 	wg.Add(1)
+	// 	go func(){
+	// 		defer wg.Done()
+	// 		increment()
+	// 	}()
+	// }
+	// wg.Wait()
+
+	s := kv.NewStore(0)
+	s.Set("pageviews", "0")
+	const hits = 1000
+	cmds := make([]Command, hits)
+
+	for i := range cmds {
+		cmds[i] = Command{Op: "INCR", Key: "pageviews"}
 	}
-	fmt.Println(clonePlainstore)
-	clonePlainstore.Set("a", "value")
-	encryptedValue, err := SetKeyWithEncryption(metrics, "secret", "mysecretvalue")
-	if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		fmt.Println("Encoded Value:", encryptedValue)
-	}
+
+	// cmds := []Command{
+	// 	{Op: "SET", Key: "env", Value: "production"},
+	// 	{Op: "SET", Key: "version", Value: "0.0.1"},
+	// 	{Op: "SET", Key: "debug", Value: "true"},
+	// 	{Op: "GET", Key: "env"},
+	// 	{Op: "SET", Key: "region", Value: "eu-west-1"},
+	// 	{Op: "GET", Key: "version"},
+	// }
+	// s := CreateStore()
+	// plainstore := kv.NewStore(20)
+	RestoreBoot(s, cmds)
+	got, _, _ := s.Get("pageviews")
+    
+	fmt.Printf("expected : %d\n", hits)
+	fmt.Printf("got : %s\n", got)
+    
+	// fmt.Println("restored, stored size : ",plainstore.Len())
+	// clonePlainstore := kv.Clone(plainstore)
+	// metrics := NewMetricsMiddleware(plainstore)
+	// for _, c := range cmds {
+	// 	dispatch(metrics, c)
+	// }
+	// fmt.Println(clonePlainstore)
+	// clonePlainstore.Set("a", "value")
+	// encryptedValue, err := SetKeyWithEncryption(metrics, "secret", "mysecretvalue")
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// } else {
+	// 	fmt.Println("Encoded Value:", encryptedValue)
+	// }
 
 	// ttlStore := ttl.NewTTLStore(5 * time.Second)
 	// encryptedTTLValue, err := SetKeyWithEncryption(ttlStore, "secret", "wqdwefwrfw")
@@ -47,7 +72,7 @@ func main() {
 	// 	fmt.Println("Encoded Value:", encryptedTTLValue)
 	// }
 
-	metrics.Report()
+	// metrics.Report()
 
 }
 
