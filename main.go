@@ -5,74 +5,30 @@ import (
 	"fmt"
 	"redis_go/store"
 	"redis_go/store/kv"
+	"sync"
 	// "redis_go/store/ttl"
-	// "time"
+	"time"
 )
 
 func main() {
+    //with normal mutex : concurreny = 2ms
+	store := kv.NewStore(0)
+	store.Set("name", "Adi")
 
-	// expected :=1000
-
-	// var wg sync.WaitGroup
-
-	// for i:=0;i < expected;i++{
-	// 	wg.Add(1)
-	// 	go func(){
-	// 		defer wg.Done()
-	// 		increment()
-	// 	}()
-	// }
-	// wg.Wait()
-
-	s := kv.NewStore(0)
-	s.Set("pageviews", "0")
-	const hits = 1000
-	cmds := make([]Command, hits)
-
-	for i := range cmds {
-		cmds[i] = Command{Op: "INCR", Key: "pageviews"}
+	const readers = 100
+	const readsEach = 50
+	start := time.Now()
+	var wg sync.WaitGroup
+	for i := 0; i < readers; i++ {
+		wg.Go(func() {
+			for j := 0; j < readsEach; j++ {
+				store.Get("name")
+			}
+		})
 	}
-
-	// cmds := []Command{
-	// 	{Op: "SET", Key: "env", Value: "production"},
-	// 	{Op: "SET", Key: "version", Value: "0.0.1"},
-	// 	{Op: "SET", Key: "debug", Value: "true"},
-	// 	{Op: "GET", Key: "env"},
-	// 	{Op: "SET", Key: "region", Value: "eu-west-1"},
-	// 	{Op: "GET", Key: "version"},
-	// }
-	// s := CreateStore()
-	// plainstore := kv.NewStore(20)
-	RestoreBoot(s, cmds)
-	got, _, _ := s.Get("pageviews")
-    
-	fmt.Printf("expected : %d\n", hits)
-	fmt.Printf("got : %s\n", got)
-    
-	// fmt.Println("restored, stored size : ",plainstore.Len())
-	// clonePlainstore := kv.Clone(plainstore)
-	// metrics := NewMetricsMiddleware(plainstore)
-	// for _, c := range cmds {
-	// 	dispatch(metrics, c)
-	// }
-	// fmt.Println(clonePlainstore)
-	// clonePlainstore.Set("a", "value")
-	// encryptedValue, err := SetKeyWithEncryption(metrics, "secret", "mysecretvalue")
-	// if err != nil {
-	// 	fmt.Println("Error:", err)
-	// } else {
-	// 	fmt.Println("Encoded Value:", encryptedValue)
-	// }
-
-	// ttlStore := ttl.NewTTLStore(5 * time.Second)
-	// encryptedTTLValue, err := SetKeyWithEncryption(ttlStore, "secret", "wqdwefwrfw")
-	// if err != nil {
-	// 	fmt.Println("Error:", err)
-	// } else {
-	// 	fmt.Println("Encoded Value:", encryptedTTLValue)
-	// }
-
-	// metrics.Report()
+	wg.Wait()
+	fmt.Printf("%d readers did %d concurrent reads in %s\n",
+		readers, readers*readsEach, time.Since(start).Round(time.Millisecond))
 
 }
 

@@ -23,7 +23,7 @@ var ErrMaxKeysReached = errors.New("maximum number of keys reached")
 
 // Store is a struct that represents a simple key-value store.
 type Store struct {
-    mu sync.Mutex
+    mu sync.RWMutex
 	data    map[string]string
 	maxSize int //0=unlimited
 }
@@ -51,9 +51,10 @@ func (s *Store) Get(key string) (string, bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock() 
 	if value, exists := s.data[key]; exists {
+        time.Sleep(time.Millisecond)
 		return value, true, nil
 	}
-
+    
 	return "", false, errors.New("key not found")
 }
 
