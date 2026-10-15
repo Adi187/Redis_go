@@ -1,46 +1,51 @@
 package main
 
 import (
-	"log"
 	"redis_go/store"
 	"strings"
 	"sync"
+	"fmt"
 )
 
 type Command struct {
 	Op    string
 	Key   string
 	Value string
-
 }
 
-
-func dispatch(s store.Storer, c Command) {
+func dispatch(s store.Storer, c Command) error {
 	switch strings.ToUpper(c.Op) {
 	case "SET":
-		log.Printf("SET key %s",c.Key)
-		s.Set(c.Key,c.Value)
+		return s.Set(c.Key, c.Value)
 	case "GET":
-		s.Get(c.Key)
+		_, _, err := s.Get(c.Key)
+		return err
 	case "INCR":
-		s.Incr(c.Key)
+		_, err := s.Incr(c.Key)
+		return err
+	default:
+		return fmt.Errorf("unknown command: %q", c.Op)
 	}
 }
-
 
 // RestoreBoot implements a slice of commands against a store
 func RestoreBoot(s store.Storer, cmds []Command) {
 	var wg sync.WaitGroup
+	errs := make(chan error,len(cmds))
 	for _, c := range cmds {
-     wg.Add(1)
-	 go func(){
-		//defers the code to the end of 
-		//the function
-	   defer wg.Done()
-       dispatch(s,c)
-	 }()
+		wg.Go(func() {
+			errs <- dispatch(s, c)
+		})
 	}
+    
+	go func(){
+		wg.Wait()
+		close(errs)
+	}()
 
-    wg.Wait()
-
+	for err := range errs{
+		if err!= nil {
+			fmt.Printf("Error: %v ",err)
+		}
+	}
 }

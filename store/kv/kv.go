@@ -38,7 +38,6 @@ func (s *Store) Set(key, value string) error {
 	// If the key does not exist, check if the store has reached its maximum size
 	if s.maxSize > 0 && len(s.data) >= s.maxSize && !exists {
 		//throw an error
-
 		return fmt.Errorf("Set(%q):%w", key, ErrMaxKeysReached)
 	}
 
@@ -48,8 +47,8 @@ func (s *Store) Set(key, value string) error {
 }
 
 func (s *Store) Get(key string) (string, bool, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock() 
+	s.mu.RLock()
+	defer s.mu.RUnlock() 
 	if value, exists := s.data[key]; exists {
         time.Sleep(time.Millisecond)
 		return value, true, nil
